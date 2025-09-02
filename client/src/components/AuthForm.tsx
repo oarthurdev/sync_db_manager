@@ -114,22 +114,39 @@ export function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-grid-pattern opacity-30"></div>
+      <Card className="w-full max-w-md glass border-border/50 shadow-2xl relative z-10">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
-            <i className="fas fa-database text-primary text-4xl"></i>
+          <div className="flex items-center justify-center mb-6">
+            <div className="p-4 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl">
+              <i className="fas fa-database text-primary text-4xl"></i>
+            </div>
           </div>
-          <CardTitle className="text-2xl">PostgreSchema Manager</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">PostgreSchema Manager</CardTitle>
+          <CardDescription className="text-muted-foreground mt-2">
             Gerencie schemas PostgreSQL com interface visual e sincronização automática via Prisma ORM
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login" data-testid="tab-login">Entrar</TabsTrigger>
-              <TabsTrigger value="register" data-testid="tab-register">Criar Conta</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-muted/30 p-1">
+              <TabsTrigger 
+                value="login" 
+                data-testid="tab-login"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200"
+              >
+                <i className="fas fa-sign-in-alt mr-2"></i>
+                Entrar
+              </TabsTrigger>
+              <TabsTrigger 
+                value="register" 
+                data-testid="tab-register"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200"
+              >
+                <i className="fas fa-user-plus mr-2"></i>
+                Criar Conta
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -175,11 +192,11 @@ export function AuthForm() {
                   
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200 shadow-lg hover:shadow-xl"
                     disabled={loginMutation.isPending}
                     data-testid="button-login"
                   >
-                    <i className="fas fa-sign-in-alt mr-2"></i>
+                    <i className={`fas ${loginMutation.isPending ? 'fa-spinner fa-spin' : 'fa-sign-in-alt'} mr-2`}></i>
                     {loginMutation.isPending ? "Entrando..." : "Entrar"}
                   </Button>
                 </form>
@@ -266,11 +283,11 @@ export function AuthForm() {
                   
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 transition-all duration-200 shadow-lg hover:shadow-xl"
                     disabled={registerMutation.isPending}
                     data-testid="button-register"
                   >
-                    <i className="fas fa-user-plus mr-2"></i>
+                    <i className={`fas ${registerMutation.isPending ? 'fa-spinner fa-spin' : 'fa-user-plus'} mr-2`}></i>
                     {registerMutation.isPending ? "Criando..." : "Criar Conta"}
                   </Button>
                 </form>

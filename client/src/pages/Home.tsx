@@ -137,40 +137,46 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="bg-card border-b border-border flex items-center justify-between px-4 py-2 h-12">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <i className="fas fa-database text-primary text-lg"></i>
-            <h1 className="text-lg font-semibold">PostgreSchema Manager</h1>
+      <header className="bg-gradient-to-r from-card to-card/80 border-b border-border/50 flex items-center justify-between px-6 py-3 h-16 backdrop-blur-sm">
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <i className="fas fa-database text-primary text-xl"></i>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">PostgreSchema Manager</h1>
+              <p className="text-xs text-muted-foreground">Gerencie schemas PostgreSQL com facilidade</p>
+            </div>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>PostgreSQL Conectado</span>
+          <div className="flex items-center space-x-2 px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span className="text-sm text-green-700 dark:text-green-400 font-medium">PostgreSQL Conectado</span>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-4">
           <Button 
             variant="outline" 
             size="sm"
+            className="bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400 hover:bg-blue-500/20 transition-all duration-200"
             data-testid="button-sync-all"
           >
             <i className="fas fa-sync-alt mr-2"></i>
             Sincronizar Tudo
           </Button>
-          <div className="flex items-center space-x-2 text-sm">
+          <div className="flex items-center space-x-3 px-3 py-2 bg-muted/30 rounded-full border border-border/50">
             {user?.profileImageUrl ? (
               <img 
                 src={user.profileImageUrl} 
                 alt="Avatar do usuário" 
-                className="w-6 h-6 rounded-full object-cover"
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20"
                 data-testid="img-user-avatar"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                <i className="fas fa-user text-primary-foreground text-xs"></i>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center ring-2 ring-primary/20">
+                <i className="fas fa-user text-primary-foreground text-sm"></i>
               </div>
             )}
-            <span data-testid="text-user-name">
+            <span className="text-sm font-medium" data-testid="text-user-name">
               {user?.firstName || user?.lastName 
                 ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
                 : user?.email || "Usuário"}
@@ -179,9 +185,11 @@ export default function Home() {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+              className="hover:bg-destructive/10 hover:text-destructive transition-colors ml-2"
               data-testid="button-logout"
             >
-              <i className="fas fa-sign-out-alt"></i>
+              <i className={`fas ${logoutMutation.isPending ? 'fa-spinner fa-spin' : 'fa-sign-out-alt'}`}></i>
             </Button>
           </div>
         </div>
@@ -236,24 +244,33 @@ export default function Home() {
       </div>
 
       {/* Status Bar */}
-      <div className="bg-card border-t border-border px-4 py-2 flex items-center justify-between text-xs">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span className="text-muted-foreground">PostgreSQL: Conectado</span>
+      <div className="bg-gradient-to-r from-card/90 to-card/60 border-t border-border/50 px-6 py-3 flex items-center justify-between text-sm backdrop-blur-sm">
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2 px-2 py-1 bg-green-500/10 rounded-md">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span className="text-green-700 dark:text-green-400 font-medium">PostgreSQL: Conectado</span>
           </div>
           {selectedSchema && (
             <>
-              <div className="text-muted-foreground">Schema: {selectedSchema.name}</div>
-              <div className="text-muted-foreground">
-                Última atualização: {selectedSchema.updatedAt ? new Date(selectedSchema.updatedAt).toLocaleString() : ""}
+              <div className="flex items-center space-x-2">
+                <i className="fas fa-file-code text-primary"></i>
+                <span className="font-medium">{selectedSchema.name}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <i className="fas fa-clock text-xs"></i>
+                <span>
+                  {selectedSchema.updatedAt ? new Date(selectedSchema.updatedAt).toLocaleString('pt-BR') : ""}
+                </span>
               </div>
             </>
           )}
         </div>
         <div className="flex items-center space-x-4">
           {hasUnsavedChanges && (
-            <div className="text-yellow-500">Alterações não salvas</div>
+            <div className="flex items-center space-x-2 px-3 py-1 bg-yellow-500/10 rounded-md border border-yellow-500/20">
+              <i className="fas fa-exclamation-triangle text-yellow-500 text-xs"></i>
+              <span className="text-yellow-700 dark:text-yellow-400 font-medium">Alterações não salvas</span>
+            </div>
           )}
         </div>
       </div>

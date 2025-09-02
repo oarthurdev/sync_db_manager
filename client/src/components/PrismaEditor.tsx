@@ -157,51 +157,60 @@ export function PrismaEditor({ schemaId, content, onContentChange, onSave }: Pri
   return (
     <div className="flex-1 flex flex-col">
       {/* Editor Toolbar */}
-      <div className="bg-card border-b border-border px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <i className="fas fa-file-code text-primary"></i>
-          <span className="text-sm font-medium">Editor Prisma</span>
+      <div className="bg-gradient-to-r from-card to-card/80 border-b border-border/50 px-6 py-3 flex items-center justify-between backdrop-blur-sm">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <i className="fas fa-file-code text-primary"></i>
+          </div>
+          <div>
+            <span className="text-sm font-semibold text-foreground">Editor Prisma</span>
+            <p className="text-xs text-muted-foreground">Editor com destaque de sintaxe</p>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={handleValidate}
             disabled={validateMutation.isPending}
+            className="bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-500/20 transition-all duration-200"
             data-testid="button-validate"
           >
-            <i className="fas fa-check-circle text-green-500 mr-2"></i>
-            Validar
+            <i className={`fas ${validateMutation.isPending ? 'fa-spinner fa-spin' : 'fa-check-circle'} mr-2`}></i>
+            {validateMutation.isPending ? 'Validando...' : 'Validar'}
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={handleFormat}
             disabled={formatMutation.isPending}
+            className="bg-purple-500/10 border-purple-500/20 text-purple-700 dark:text-purple-400 hover:bg-purple-500/20 transition-all duration-200"
             data-testid="button-format"
           >
-            <i className="fas fa-indent mr-2"></i>
-            Formatar
+            <i className={`fas ${formatMutation.isPending ? 'fa-spinner fa-spin' : 'fa-magic'} mr-2`}></i>
+            {formatMutation.isPending ? 'Formatando...' : 'Formatar'}
           </Button>
           <Button
             onClick={handleSync}
             disabled={syncMutation.isPending}
             size="sm"
+            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-all duration-200 shadow-lg hover:shadow-xl"
             data-testid="button-sync"
           >
-            <i className="fas fa-sync-alt mr-2"></i>
+            <i className={`fas ${syncMutation.isPending ? 'fa-spinner fa-spin' : 'fa-sync-alt'} mr-2`}></i>
             {syncMutation.isPending ? "Sincronizando..." : "Sincronizar"}
           </Button>
         </div>
       </div>
 
       {/* Code Editor */}
-      <div className="flex-1 relative bg-[hsl(220,13%,12%)] border border-[hsl(220,13%,18%)]">
-        <div className="absolute inset-0 flex">
+      <div className="flex-1 relative bg-gradient-to-br from-[hsl(220,13%,12%)] to-[hsl(220,13%,10%)] border border-[hsl(220,13%,18%)]/50 shadow-2xl">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div className="absolute inset-0 flex relative z-10">
           {/* Line numbers */}
-          <div className="select-none text-muted-foreground text-right pr-4 border-r border-border bg-[hsl(220,13%,11%)] font-mono text-sm leading-6 p-4" style={{ width: "60px" }}>
+          <div className="select-none text-muted-foreground/70 text-right pr-4 border-r border-border/30 bg-gradient-to-b from-[hsl(220,13%,11%)] to-[hsl(220,13%,9%)] font-mono text-sm leading-6 p-4 backdrop-blur-sm" style={{ width: "60px" }}>
             {lineNumbers.map((num) => (
-              <div key={num}>{num}</div>
+              <div key={num} className="hover:text-muted-foreground transition-colors">{num}</div>
             ))}
           </div>
           
@@ -212,10 +221,12 @@ export function PrismaEditor({ schemaId, content, onContentChange, onSave }: Pri
               value={content}
               onChange={(e) => onContentChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="absolute inset-0 w-full h-full p-4 bg-transparent text-foreground font-mono text-sm leading-6 resize-none outline-none"
+              placeholder="// Defina seu schema Prisma aqui..."
+              className="absolute inset-0 w-full h-full p-6 bg-transparent text-foreground font-mono text-sm leading-6 resize-none outline-none placeholder:text-muted-foreground/50 selection:bg-primary/20"
               style={{ 
-                fontFamily: "JetBrains Mono, Fira Code, monospace",
+                fontFamily: "JetBrains Mono, 'Fira Code', 'Source Code Pro', Consolas, monospace",
                 tabSize: 2,
+                textShadow: "0 0 1px rgba(255,255,255,0.1)"
               }}
               spellCheck={false}
               data-testid="textarea-editor"
