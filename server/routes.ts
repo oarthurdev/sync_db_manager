@@ -351,6 +351,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Schema não encontrado" });
       }
 
+      // Busca a conexão específica associada ao schema
+      const dbConnection = await storage.getDatabaseConnection(
+        schema.databaseConnectionId,
+      );
+      if (!dbConnection) {
+        return res
+          .status(404)
+          .json({ message: "Conexão de banco não encontrada" });
+      }
+
       // Log sync start
       await storage.createSyncLog({
         schemaId: schema.id,
@@ -358,9 +368,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Iniciando sincronização...",
       });
 
+      // Cria a string de conexão usando os dados da conexão específica
+      const connectionString = databaseService.createConnectionString(dbConnection);
+
       const result = await prismaService.syncSchema(
         schema.name,
         schema.prismaContent,
+        connectionString
       );
 
       // Log sync result
@@ -459,10 +473,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `Sincronização automática iniciada. Diferenças: ${comparison.differences.join("; ")}`,
       });
 
+      // Cria a string de conexão usando os dados da conexão específica
+      const connectionString = databaseService.createConnectionString(dbConnection);
+      
       // Executa a sincronização usando a conexão específica
       const result = await prismaService.syncSchema(
         schema.name,
         schema.prismaContent,
+        connectionString
       );
 
       if (result.success) {
@@ -528,7 +546,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database introspection
   app.post("/api/database/introspect", async (req, res) => {
     try {
-      const result = await prismaService.introspectDatabase();
+      const { connectionId } = req.body;
+      
+      let connectionString: string | undefined;
+      
+      if (connectionId) {
+        // Busca as informações de conexão específica da tabela database_connections
+        const connection = await storage.getDatabaseConnection(connectionId);
+        if (!connection) {
+          return res.status(404).json({ message: "Conexão de banco não encontrada" });
+        }
+        
+        // Cria a string de conexão usando os dados da tabela
+        connectionString = databaseService.createConnectionString(connection);
+      }
+      // Se connectionId não foi fornecido, usa DATABASE_URL padrão (connectionString fica undefined)
+      
+      const result = await prismaService.introspectDatabase(connectionString);
       res.json(result);
     } catch (error) {
       console.error("Error introspecting database:", error);

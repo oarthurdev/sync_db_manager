@@ -50,12 +50,15 @@ export class PrismaService {
     }
   }
 
-  async syncSchema(schemaName: string, schemaContent: string): Promise<{ success: boolean; output: string }> {
+  async syncSchema(schemaName: string, schemaContent: string, connectionString?: string): Promise<{ success: boolean; output: string }> {
     try {
       const schemaPath = path.join(this.schemasDir, `${schemaName}.prisma`);
       
       // Save schema content to file
       await import("fs/promises").then(fs => fs.writeFile(schemaPath, schemaContent));
+      
+      // Use the provided connection string or fall back to the default DATABASE_URL
+      const databaseUrl = connectionString || process.env.DATABASE_URL;
       
       // Run prisma db push
       const { stdout, stderr } = await execAsync(
@@ -63,7 +66,7 @@ export class PrismaService {
         { 
           env: { 
             ...process.env,
-            DATABASE_URL: process.env.DATABASE_URL 
+            DATABASE_URL: databaseUrl 
           }
         }
       );
@@ -79,12 +82,15 @@ export class PrismaService {
     }
   }
 
-  async introspectDatabase(): Promise<{ success: boolean; output: string; schema?: string }> {
+  async introspectDatabase(connectionString?: string): Promise<{ success: boolean; output: string; schema?: string }> {
     try {
+      // Use the provided connection string or fall back to the default DATABASE_URL
+      const databaseUrl = connectionString || process.env.DATABASE_URL;
+      
       const { stdout } = await execAsync(`npx prisma db pull`, {
         env: { 
           ...process.env,
-          DATABASE_URL: process.env.DATABASE_URL 
+          DATABASE_URL: databaseUrl 
         }
       });
       

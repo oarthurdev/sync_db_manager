@@ -9,7 +9,7 @@ export class DatabaseService {
   /**
    * Cria uma string de conexão a partir dos dados de configuração
    */
-  private createConnectionString(config: DatabaseConnection): string {
+  createConnectionString(config: DatabaseConnection): string {
     const { host, port, database, username, password, sslMode = 'prefer' } = config;
     return `postgresql://${username}:${password}@${host}:${port}/${database}?sslmode=${sslMode}`;
   }

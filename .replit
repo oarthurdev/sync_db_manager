@@ -1,5 +1,5 @@
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = "npm run dev"
+run = "npm run build && npm start"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
@@ -39,5 +39,13 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [agent]
-integrations = ["javascript_log_in_with_replit==1.0.0", "javascript_database==1.0.0", "javascript_supabase==1.0.0"]
+integrations = [
+  "javascript_log_in_with_replit==1.0.0",
+  "javascript_database==1.0.0",
+  "javascript_supabase==1.0.0",
+]
+expertMode = true
