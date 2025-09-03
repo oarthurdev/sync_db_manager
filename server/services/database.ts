@@ -90,10 +90,10 @@ export class DatabaseService {
    */
   async getDatabaseSchema(config: DatabaseConnection, schemaName: string): Promise<any> {
     try {
-      const { db } = await this.getConnection(config);
+      const { db: connection } = await this.getConnection(config);
       
       // Query para obter informações sobre tabelas e colunas do schema específico
-      const result = await db.execute(`
+      const result = await connection.execute(`
         SELECT 
           table_name, 
           column_name, 
@@ -133,7 +133,7 @@ export class DatabaseService {
       const differences: string[] = [];
       
       // Verifica se há tabelas no banco que não estão no Prisma
-      const dbTableNames = Array.from(new Set(databaseTables.map((row: any) => row.table_name)));
+      const dbTableNames = Array.from(new Set(databaseTables.map((row: any) => row.table_name))) as string[];
       const prismaTableNames = prismaModels.map(model => model.tableName || model.name.toLowerCase());
       
       const extraDbTables = dbTableNames.filter(name => !prismaTableNames.includes(name));

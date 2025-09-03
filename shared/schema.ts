@@ -116,8 +116,6 @@ export const insertSchemaSchema = createInsertSchema(schemas).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  lastSyncedAt: true,
-  schemaHash: true,
 });
 
 export const insertSyncLogSchema = createInsertSchema(syncLogs).omit({
