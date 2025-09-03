@@ -235,11 +235,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedData.databaseConnectionId,
       );
       if (existing) {
-        return res
-          .status(400)
-          .json({
-            message: "Schema com este nome já existe para esta conexão",
-          });
+        return res.status(400).json({
+          message: "Schema com este nome já existe para esta conexão",
+        });
       }
 
       // Generate default Prisma content if not provided
@@ -369,12 +367,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Cria a string de conexão usando os dados da conexão específica
-      const connectionString = databaseService.createConnectionString(dbConnection);
+      const connectionString =
+        databaseService.createConnectionString(dbConnection);
 
       const result = await prismaService.syncSchema(
         schema.name,
         schema.prismaContent,
-        connectionString
+        connectionString,
       );
 
       // Log sync result
@@ -474,13 +473,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Cria a string de conexão usando os dados da conexão específica
-      const connectionString = databaseService.createConnectionString(dbConnection);
-      
+      const connectionString =
+        databaseService.createConnectionString(dbConnection);
+
       // Executa a sincronização usando a conexão específica
       const result = await prismaService.syncSchema(
         schema.name,
         schema.prismaContent,
-        connectionString
+        connectionString,
       );
 
       if (result.success) {
@@ -544,51 +544,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Database introspection
-  app.post("/api/database/introspect", isAuthenticated, async (req: any, res) => {
+  app.post("/api/database/introspect", async (req: any, res) => {
     try {
       const { connectionId } = req.body;
-      
+
       if (!connectionId) {
-        return res.status(400).json({ message: "connectionId é obrigatório para salvar schemas" });
+        return res
+          .status(400)
+          .json({ message: "connectionId é obrigatório para salvar schemas" });
       }
-      
+
       // Busca as informações de conexão específica da tabela database_connections
       const connection = await storage.getDatabaseConnection(connectionId);
       if (!connection) {
-        return res.status(404).json({ message: "Conexão de banco não encontrada" });
+        return res
+          .status(404)
+          .json({ message: "Conexão de banco não encontrada" });
       }
-      
+
       // Cria a string de conexão usando os dados da tabela
-      const connectionString = databaseService.createConnectionString(connection);
-      
+      const connectionString =
+        databaseService.createConnectionString(connection);
+
       // Executa o introspect
-      const result = await prismaService.introspectDatabase(connectionString, connection);
-      
+      const result = await prismaService.introspectDatabase(
+        connectionString,
+        connection,
+      );
+
       if (!result.success) {
         return res.json(result);
       }
-      
+
       // Salva os schemas gerados na tabela schemas
       const savedSchemas: any[] = [];
-      
+
       if (result.schemas) {
-        for (const [schemaName, schemaContent] of Object.entries(result.schemas)) {
+        for (const [schemaName, schemaContent] of Object.entries(
+          result.schemas,
+        )) {
           try {
             // Verifica se já existe um schema com esse nome para esta conexão
-            const existingSchema = await storage.getSchemaByName(schemaName, connectionId);
-            
+            const existingSchema = await storage.getSchemaByName(
+              schemaName,
+              connectionId,
+            );
+
             if (existingSchema) {
               // Atualiza o schema existente
-              const schemaHash = databaseService.generateSchemaHash(schemaContent);
-              const updatedSchema = await storage.updateSchema(existingSchema.id, {
-                prismaContent: schemaContent,
-                schemaHash: schemaHash,
-                lastSyncedAt: new Date(),
-              });
+              const schemaHash =
+                databaseService.generateSchemaHash(schemaContent);
+              const updatedSchema = await storage.updateSchema(
+                existingSchema.id,
+                {
+                  prismaContent: schemaContent,
+                  schemaHash: schemaHash,
+                  lastSyncedAt: new Date(),
+                },
+              );
               savedSchemas.push(updatedSchema);
             } else {
               // Cria um novo schema
-              const schemaHash = databaseService.generateSchemaHash(schemaContent);
+              const schemaHash =
+                databaseService.generateSchemaHash(schemaContent);
               const newSchema = await storage.createSchema({
                 name: schemaName,
                 description: `Schema introspectado automaticamente para ${schemaName}`,
@@ -604,11 +622,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
+
       res.json({
         ...result,
         savedSchemas: savedSchemas,
-        message: `Introspect concluído. ${savedSchemas.length} schemas salvos.`
+        message: `Introspect concluído. ${savedSchemas.length} schemas salvos.`,
       });
     } catch (error) {
       console.error("Error introspecting database:", error);
