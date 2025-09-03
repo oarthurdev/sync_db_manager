@@ -5,10 +5,10 @@ import { setupAuth, isAuthenticated } from "./supabaseAuth";
 import { schemaService } from "./services/schema";
 import { prismaService } from "./services/prisma";
 import { databaseService } from "./services/database";
-import { 
-  insertSchemaSchema, 
-  insertSyncLogSchema, 
-  insertDatabaseConnectionSchema 
+import {
+  insertSchemaSchema,
+  insertSyncLogSchema,
+  insertDatabaseConnectionSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -16,7 +16,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
@@ -28,122 +28,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Database Connection routes
-  app.get("/api/database-connections", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const connections = await storage.getDatabaseConnections(userId);
-      res.json(connections);
-    } catch (error) {
-      console.error("Error fetching database connections:", error);
-      res.status(500).json({ message: "Erro ao buscar conexões de banco" });
-    }
-  });
-
-  app.get("/api/database-connections/:id", isAuthenticated, async (req, res) => {
-    try {
-      const connection = await storage.getDatabaseConnection(req.params.id);
-      if (!connection) {
-        return res.status(404).json({ message: "Conexão não encontrada" });
+  app.get(
+    "/api/database-connections",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const userId = req.user.id;
+        const connections = await storage.getDatabaseConnections(userId);
+        res.json(connections);
+      } catch (error) {
+        console.error("Error fetching database connections:", error);
+        res.status(500).json({ message: "Erro ao buscar conexões de banco" });
       }
-      res.json(connection);
-    } catch (error) {
-      console.error("Error fetching database connection:", error);
-      res.status(500).json({ message: "Erro ao buscar conexão" });
-    }
-  });
+    },
+  );
 
-  app.post("/api/database-connections", isAuthenticated, async (req: any, res) => {
-    try {
-      const validatedData = insertDatabaseConnectionSchema.parse({
-        ...req.body,
-        userId: req.user.id
-      });
+  app.get(
+    "/api/database-connections/:id",
+    isAuthenticated,
+    async (req, res) => {
+      try {
+        const connection = await storage.getDatabaseConnection(req.params.id);
+        if (!connection) {
+          return res.status(404).json({ message: "Conexão não encontrada" });
+        }
+        res.json(connection);
+      } catch (error) {
+        console.error("Error fetching database connection:", error);
+        res.status(500).json({ message: "Erro ao buscar conexão" });
+      }
+    },
+  );
 
-      // Testa a conexão antes de salvar
-      const testResult = await databaseService.testConnection(validatedData as any);
-      if (!testResult.success) {
-        return res.status(400).json({ 
-          message: "Falha ao conectar com o banco", 
-          error: testResult.error 
+  app.post(
+    "/api/database-connections",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const validatedData = insertDatabaseConnectionSchema.parse({
+          ...req.body,
+          userId: req.user.id,
         });
-      }
 
-      const connection = await storage.createDatabaseConnection(validatedData);
-      res.json(connection);
-    } catch (error: any) {
-      console.error("Error creating database connection:", error);
-      if (error.name === "ZodError") {
-        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
-      }
-      res.status(500).json({ message: "Erro ao criar conexão de banco" });
-    }
-  });
-
-  app.put("/api/database-connections/:id", isAuthenticated, async (req, res) => {
-    try {
-      const existingConnection = await storage.getDatabaseConnection(req.params.id);
-      if (!existingConnection) {
-        return res.status(404).json({ message: "Conexão não encontrada" });
-      }
-
-      const validatedData = insertDatabaseConnectionSchema.partial().parse(req.body);
-      
-      // Se mudou os dados de conexão, testa novamente
-      if (validatedData.host || validatedData.port || validatedData.database || 
-          validatedData.username || validatedData.password) {
-        const testConfig = { ...existingConnection, ...validatedData };
-        const testResult = await databaseService.testConnection(testConfig as any);
+        // Testa a conexão antes de salvar
+        const testResult = await databaseService.testConnection(
+          validatedData as any,
+        );
         if (!testResult.success) {
-          return res.status(400).json({ 
-            message: "Falha ao conectar com o banco", 
-            error: testResult.error 
+          return res.status(400).json({
+            message: "Falha ao conectar com o banco",
+            error: testResult.error,
           });
         }
+
+        const connection =
+          await storage.createDatabaseConnection(validatedData);
+        res.json(connection);
+      } catch (error: any) {
+        console.error("Error creating database connection:", error);
+        if (error.name === "ZodError") {
+          return res
+            .status(400)
+            .json({ message: "Dados inválidos", errors: error.errors });
+        }
+        res.status(500).json({ message: "Erro ao criar conexão de banco" });
       }
+    },
+  );
 
-      const connection = await storage.updateDatabaseConnection(req.params.id, validatedData);
-      res.json(connection);
-    } catch (error: any) {
-      console.error("Error updating database connection:", error);
-      if (error.name === "ZodError") {
-        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+  app.put(
+    "/api/database-connections/:id",
+    isAuthenticated,
+    async (req, res) => {
+      try {
+        const existingConnection = await storage.getDatabaseConnection(
+          req.params.id,
+        );
+        if (!existingConnection) {
+          return res.status(404).json({ message: "Conexão não encontrada" });
+        }
+
+        const validatedData = insertDatabaseConnectionSchema
+          .partial()
+          .parse(req.body);
+
+        // Se mudou os dados de conexão, testa novamente
+        if (
+          validatedData.host ||
+          validatedData.port ||
+          validatedData.database ||
+          validatedData.username ||
+          validatedData.password
+        ) {
+          const testConfig = { ...existingConnection, ...validatedData };
+          const testResult = await databaseService.testConnection(
+            testConfig as any,
+          );
+          if (!testResult.success) {
+            return res.status(400).json({
+              message: "Falha ao conectar com o banco",
+              error: testResult.error,
+            });
+          }
+        }
+
+        const connection = await storage.updateDatabaseConnection(
+          req.params.id,
+          validatedData,
+        );
+        res.json(connection);
+      } catch (error: any) {
+        console.error("Error updating database connection:", error);
+        if (error.name === "ZodError") {
+          return res
+            .status(400)
+            .json({ message: "Dados inválidos", errors: error.errors });
+        }
+        res.status(500).json({ message: "Erro ao atualizar conexão de banco" });
       }
-      res.status(500).json({ message: "Erro ao atualizar conexão de banco" });
-    }
-  });
+    },
+  );
 
-  app.delete("/api/database-connections/:id", isAuthenticated, async (req, res) => {
-    try {
-      const connection = await storage.getDatabaseConnection(req.params.id);
-      if (!connection) {
-        return res.status(404).json({ message: "Conexão não encontrada" });
+  app.delete(
+    "/api/database-connections/:id",
+    isAuthenticated,
+    async (req, res) => {
+      try {
+        const connection = await storage.getDatabaseConnection(req.params.id);
+        if (!connection) {
+          return res.status(404).json({ message: "Conexão não encontrada" });
+        }
+
+        // Fecha a conexão ativa se existir
+        await databaseService.closeConnection(req.params.id);
+
+        await storage.deleteDatabaseConnection(req.params.id);
+        res.json({ message: "Conexão deletada com sucesso" });
+      } catch (error) {
+        console.error("Error deleting database connection:", error);
+        res.status(500).json({ message: "Erro ao deletar conexão de banco" });
       }
+    },
+  );
 
-      // Fecha a conexão ativa se existir
-      await databaseService.closeConnection(req.params.id);
-      
-      await storage.deleteDatabaseConnection(req.params.id);
-      res.json({ message: "Conexão deletada com sucesso" });
-    } catch (error) {
-      console.error("Error deleting database connection:", error);
-      res.status(500).json({ message: "Erro ao deletar conexão de banco" });
-    }
-  });
+  app.post(
+    "/api/database-connections/:id/test",
+    isAuthenticated,
+    async (req, res) => {
+      try {
+        const connection = await storage.getDatabaseConnection(req.params.id);
+        if (!connection) {
+          return res.status(404).json({ message: "Conexão não encontrada" });
+        }
 
-  app.post("/api/database-connections/:id/test", isAuthenticated, async (req, res) => {
-    try {
-      const connection = await storage.getDatabaseConnection(req.params.id);
-      if (!connection) {
-        return res.status(404).json({ message: "Conexão não encontrada" });
+        const testResult = await databaseService.testConnection(connection);
+        res.json(testResult);
+      } catch (error) {
+        console.error("Error testing database connection:", error);
+        res.status(500).json({ message: "Erro ao testar conexão" });
       }
-
-      const testResult = await databaseService.testConnection(connection);
-      res.json(testResult);
-    } catch (error) {
-      console.error("Error testing database connection:", error);
-      res.status(500).json({ message: "Erro ao testar conexão" });
-    }
-  });
+    },
+  );
 
   // Schema routes
   app.get("/api/schemas", isAuthenticated, async (req, res) => {
@@ -173,42 +218,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/schemas", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertSchemaSchema.parse(req.body);
-      
+
       // Verifica se a conexão de banco existe
-      const dbConnection = await storage.getDatabaseConnection(validatedData.databaseConnectionId);
+      const dbConnection = await storage.getDatabaseConnection(
+        validatedData.databaseConnectionId,
+      );
       if (!dbConnection) {
-        return res.status(400).json({ message: "Conexão de banco não encontrada" });
+        return res
+          .status(400)
+          .json({ message: "Conexão de banco não encontrada" });
       }
-      
+
       // Check if schema name already exists for this database connection
-      const existing = await storage.getSchemaByName(validatedData.name, validatedData.databaseConnectionId);
+      const existing = await storage.getSchemaByName(
+        validatedData.name,
+        validatedData.databaseConnectionId,
+      );
       if (existing) {
-        return res.status(400).json({ message: "Schema com este nome já existe para esta conexão" });
+        return res
+          .status(400)
+          .json({
+            message: "Schema com este nome já existe para esta conexão",
+          });
       }
 
       // Generate default Prisma content if not provided
       if (!validatedData.prismaContent) {
-        validatedData.prismaContent = schemaService.generateDefaultPrismaContent(validatedData.name);
+        validatedData.prismaContent =
+          schemaService.generateDefaultPrismaContent(validatedData.name);
       }
 
       // Gera hash do schema para detecção de mudanças
-      const schemaHash = databaseService.generateSchemaHash(validatedData.prismaContent);
+      const schemaHash = databaseService.generateSchemaHash(
+        validatedData.prismaContent,
+      );
 
       const schema = await storage.createSchema({
         ...validatedData,
-        schemaHash
+        schemaHash,
       });
-      
+
       await schemaService.saveSchemaFile(
-        `${dbConnection.name}_${schema.name}`, 
-        schema.prismaContent
+        `${dbConnection.name}_${schema.name}`,
+        schema.prismaContent,
       );
-      
+
       res.json(schema);
     } catch (error: any) {
       console.error("Error creating schema:", error);
       if (error.name === "ZodError") {
-        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Dados inválidos", errors: error.errors });
       }
       res.status(500).json({ message: "Erro ao criar schema" });
     }
@@ -223,16 +284,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updates = insertSchemaSchema.partial().parse(req.body);
       const updatedSchema = await storage.updateSchema(req.params.id, updates);
-      
+
       if (updates.prismaContent) {
-        await schemaService.saveSchemaFile(updatedSchema.name, updates.prismaContent);
+        await schemaService.saveSchemaFile(
+          updatedSchema.name,
+          updates.prismaContent,
+        );
       }
-      
+
       res.json(updatedSchema);
     } catch (error: any) {
       console.error("Error updating schema:", error);
       if (error.name === "ZodError") {
-        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Dados inválidos", errors: error.errors });
       }
       res.status(500).json({ message: "Erro ao atualizar schema" });
     }
@@ -247,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.deleteSchema(req.params.id);
       await schemaService.deleteSchemaFile(schema.name);
-      
+
       res.json({ message: "Schema deletado com sucesso" });
     } catch (error) {
       console.error("Error deleting schema:", error);
@@ -292,13 +358,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Iniciando sincronização...",
       });
 
-      const result = await prismaService.syncSchema(schema.name, schema.prismaContent);
-      
+      const result = await prismaService.syncSchema(
+        schema.name,
+        schema.prismaContent,
+      );
+
       // Log sync result
       await storage.createSyncLog({
         schemaId: schema.id,
         status: result.success ? "success" : "error",
-        message: result.success ? "Sincronização concluída com sucesso" : "Erro durante sincronização",
+        message: result.success
+          ? "Sincronização concluída com sucesso"
+          : "Erro durante sincronização",
         output: result.output,
       });
 
@@ -328,15 +399,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Schema não encontrado" });
       }
 
-      const dbConnection = await storage.getDatabaseConnection(schema.databaseConnectionId);
+      const dbConnection = await storage.getDatabaseConnection(
+        schema.databaseConnectionId,
+      );
       if (!dbConnection) {
-        return res.status(404).json({ message: "Conexão de banco não encontrada" });
+        return res
+          .status(404)
+          .json({ message: "Conexão de banco não encontrada" });
       }
 
       const comparison = await databaseService.compareSchemas(
-        dbConnection, 
-        schema.name, 
-        schema.prismaContent
+        dbConnection,
+        schema.name,
+        schema.prismaContent,
       );
 
       res.json(comparison);
@@ -353,23 +428,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Schema não encontrado" });
       }
 
-      const dbConnection = await storage.getDatabaseConnection(schema.databaseConnectionId);
+      const dbConnection = await storage.getDatabaseConnection(
+        schema.databaseConnectionId,
+      );
       if (!dbConnection) {
-        return res.status(404).json({ message: "Conexão de banco não encontrada" });
+        return res
+          .status(404)
+          .json({ message: "Conexão de banco não encontrada" });
       }
 
       // Compara schemas primeiro
       const comparison = await databaseService.compareSchemas(
-        dbConnection, 
-        schema.name, 
-        schema.prismaContent
+        dbConnection,
+        schema.name,
+        schema.prismaContent,
       );
 
       if (!comparison.needsSync) {
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           message: "Schema já está sincronizado",
-          needsSync: false 
+          needsSync: false,
         });
       }
 
@@ -377,18 +456,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createSyncLog({
         schemaId: schema.id,
         status: "pending",
-        message: `Sincronização automática iniciada. Diferenças: ${comparison.differences.join('; ')}`,
+        message: `Sincronização automática iniciada. Diferenças: ${comparison.differences.join("; ")}`,
       });
 
       // Executa a sincronização usando a conexão específica
-      const result = await prismaService.syncSchema(schema.name, schema.prismaContent);
-      
+      const result = await prismaService.syncSchema(
+        schema.name,
+        schema.prismaContent,
+      );
+
       if (result.success) {
         // Atualiza o hash e timestamp da última sincronização
-        const newHash = databaseService.generateSchemaHash(schema.prismaContent);
+        const newHash = databaseService.generateSchemaHash(
+          schema.prismaContent,
+        );
         await storage.updateSchema(schema.id, {
           schemaHash: newHash,
-          lastSyncedAt: new Date()
+          lastSyncedAt: new Date(),
         });
       }
 
@@ -396,8 +480,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createSyncLog({
         schemaId: schema.id,
         status: result.success ? "success" : "error",
-        message: result.success 
-          ? "Sincronização automática concluída com sucesso" 
+        message: result.success
+          ? "Sincronização automática concluída com sucesso"
           : "Erro durante sincronização automática",
         output: result.output,
       });
@@ -405,11 +489,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         ...result,
         needsSync: !result.success,
-        differences: comparison.differences
+        differences: comparison.differences,
       });
     } catch (error) {
       console.error("Error in auto-sync:", error);
-      res.status(500).json({ message: "Erro ao executar sincronização automática" });
+      res
+        .status(500)
+        .json({ message: "Erro ao executar sincronização automática" });
     }
   });
 
@@ -420,23 +506,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Schema não encontrado" });
       }
 
-      const currentHash = databaseService.generateSchemaHash(schema.prismaContent);
+      const currentHash = databaseService.generateSchemaHash(
+        schema.prismaContent,
+      );
       const hasChanges = currentHash !== schema.schemaHash;
 
       res.json({
         hasChanges,
         lastSyncedAt: schema.lastSyncedAt,
         currentHash,
-        storedHash: schema.schemaHash
+        storedHash: schema.schemaHash,
       });
     } catch (error) {
       console.error("Error checking sync status:", error);
-      res.status(500).json({ message: "Erro ao verificar status de sincronização" });
+      res
+        .status(500)
+        .json({ message: "Erro ao verificar status de sincronização" });
     }
   });
 
   // Database introspection
-  app.post("/api/database/introspect", isAuthenticated, async (req, res) => {
+  app.post("/api/database/introspect", async (req, res) => {
     try {
       const result = await prismaService.introspectDatabase();
       res.json(result);
