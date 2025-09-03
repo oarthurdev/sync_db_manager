@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 modules = ["nodejs-20", "web", "postgresql-16"]
 run = "npm run build && npm start"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
@@ -46,3 +47,10 @@ integrations = [
   "javascript_supabase==1.0.0",
 ]
 expertMode = true
+=======
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+>>>>>>> 1cde6e3 (Configure the development environment for Replit)
