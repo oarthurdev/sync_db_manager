@@ -87,14 +87,40 @@ export class PrismaService {
       // Use the provided connection string or fall back to the default DATABASE_URL
       const databaseUrl = connectionString || process.env.DATABASE_URL;
       
-      const { stdout } = await execAsync(`npx prisma db pull`, {
+      // Create a temporary minimal schema file for introspection
+      const tempSchemaName = `introspect_${Date.now()}`;
+      const tempSchemaPath = path.join(this.schemasDir, `${tempSchemaName}.prisma`);
+      
+      const minimalSchema = `
+// Temporary schema for introspection
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+`.trim();
+      
+      // Save the minimal schema file
+      await import("fs/promises").then(fs => fs.writeFile(tempSchemaPath, minimalSchema));
+      
+      // Run prisma db pull with the temporary schema
+      const { stdout } = await execAsync(`npx prisma db pull --schema="${tempSchemaPath}"`, {
         env: { 
           ...process.env,
           DATABASE_URL: databaseUrl 
         }
       });
       
-      return { success: true, output: stdout, schema: stdout };
+      // Read the generated schema content
+      const generatedSchema = await import("fs/promises").then(fs => fs.readFile(tempSchemaPath, 'utf8'));
+      
+      // Clean up temporary file
+      await import("fs/promises").then(fs => fs.unlink(tempSchemaPath).catch(() => {}));
+      
+      return { success: true, output: stdout, schema: generatedSchema };
     } catch (error: any) {
       return { 
         success: false, 
