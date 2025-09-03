@@ -35,9 +35,10 @@ type FormData = z.infer<typeof formSchema>;
 interface NewSchemaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  databaseConnectionId?: string;
 }
 
-export function NewSchemaDialog({ open, onOpenChange }: NewSchemaDialogProps) {
+export function NewSchemaDialog({ open, onOpenChange, databaseConnectionId }: NewSchemaDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -53,6 +54,10 @@ export function NewSchemaDialog({ open, onOpenChange }: NewSchemaDialogProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
+      if (!databaseConnectionId) {
+        throw new Error("Conexão de banco não selecionada");
+      }
+
       const { createSample, ...schemaData } = data;
       
       // Generate sample content if requested
@@ -78,11 +83,15 @@ model Example {
 }`;
       }
 
-      const response = await apiRequest("POST", "/api/schemas", schemaData);
+      const response = await apiRequest("POST", "/api/schemas", {
+        ...schemaData,
+        databaseConnectionId
+      });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/schemas"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/schemas", databaseConnectionId] });
       toast({
         title: "Sucesso",
         description: "Schema criado com sucesso!",

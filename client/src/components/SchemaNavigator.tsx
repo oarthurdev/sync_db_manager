@@ -11,17 +11,27 @@ import type { Schema } from "@shared/schema";
 interface SchemaNavigatorProps {
   selectedSchemaId?: string;
   onSchemaSelect: (schema: Schema) => void;
+  databaseConnectionId?: string;
 }
 
-export function SchemaNavigator({ selectedSchemaId, onSchemaSelect }: SchemaNavigatorProps) {
+export function SchemaNavigator({ selectedSchemaId, onSchemaSelect, databaseConnectionId }: SchemaNavigatorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewSchemaDialog, setShowNewSchemaDialog] = useState(false);
 
   const { data: schemas = [], isLoading } = useQuery<Schema[]>({
-    queryKey: ["/api/schemas"],
+    queryKey: ["/api/schemas", databaseConnectionId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (databaseConnectionId) {
+        params.append('databaseConnectionId', databaseConnectionId);
+      }
+      const response = await apiRequest("GET", `/api/schemas?${params.toString()}`);
+      return response.json();
+    },
     retry: false,
+    enabled: !!databaseConnectionId,
   });
 
   const deleteMutation = useMutation({
@@ -194,6 +204,7 @@ export function SchemaNavigator({ selectedSchemaId, onSchemaSelect }: SchemaNavi
       <NewSchemaDialog
         open={showNewSchemaDialog}
         onOpenChange={setShowNewSchemaDialog}
+        databaseConnectionId={databaseConnectionId}
       />
     </>
   );
