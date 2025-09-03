@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 modules = ["nodejs-20", "web", "postgresql-16"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
@@ -41,11 +40,4 @@ args = "npm run dev"
 waitForPort = 5000
 
 [agent]
-integrations = ["javascript_supabase==1.0.0", "javascript_database==1.0.0", "javascript_log_in_with_replit==1.0.0"]
-=======
-[agent]
-expertMode = true
-
-[nix]
-channel = "stable-25_05"
->>>>>>> ad0db7b (Configure Replit environment for project execution)
+integrations = ["javascript_log_in_with_replit==1.0.0", "javascript_database==1.0.0", "javascript_supabase==1.0.0"]
