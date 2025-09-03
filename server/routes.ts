@@ -549,10 +549,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { connectionId } = req.body;
       
       let connectionString: string | undefined;
+      let connection: any = undefined;
       
       if (connectionId) {
         // Busca as informações de conexão específica da tabela database_connections
-        const connection = await storage.getDatabaseConnection(connectionId);
+        connection = await storage.getDatabaseConnection(connectionId);
         if (!connection) {
           return res.status(404).json({ message: "Conexão de banco não encontrada" });
         }
@@ -562,7 +563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Se connectionId não foi fornecido, usa DATABASE_URL padrão (connectionString fica undefined)
       
-      const result = await prismaService.introspectDatabase(connectionString);
+      const result = await prismaService.introspectDatabase(connectionString, connection);
       res.json(result);
     } catch (error) {
       console.error("Error introspecting database:", error);

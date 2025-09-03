@@ -112,6 +112,27 @@ export class DatabaseService {
   }
 
   /**
+   * Obtém todos os schemas disponíveis no banco de dados
+   */
+  async getAllSchemas(config: DatabaseConnection): Promise<string[]> {
+    try {
+      const { db: connection } = await this.getConnection(config);
+      
+      // Query para obter todos os schemas (exceto os de sistema)
+      const result = await connection.execute(`
+        SELECT schema_name 
+        FROM information_schema.schemata 
+        WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+        ORDER BY schema_name
+      `);
+
+      return result.rows.map((row: any) => row.schema_name);
+    } catch (error: any) {
+      throw new Error(`Erro ao obter schemas do banco: ${error.message}`);
+    }
+  }
+
+  /**
    * Compara o schema do Prisma com o schema atual do banco
    * Retorna informações sobre diferenças encontradas
    */
