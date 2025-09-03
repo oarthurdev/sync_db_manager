@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = "npm run build && npm start"
+run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
@@ -10,7 +9,7 @@ packages = ["openssh"]
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["npm", "start"]
+run = ["npm", "run", "start"]
 
 [[ports]]
 localPort = 5000
@@ -41,16 +40,4 @@ args = "npm run dev"
 waitForPort = 5000
 
 [agent]
-integrations = [
-  "javascript_log_in_with_replit==1.0.0",
-  "javascript_database==1.0.0",
-  "javascript_supabase==1.0.0",
-]
-expertMode = true
-=======
-[agent]
-expertMode = true
-
-[nix]
-channel = "stable-25_05"
->>>>>>> 1cde6e3 (Configure the development environment for Replit)
+integrations = ["javascript_log_in_with_replit==1.0.0", "javascript_database==1.0.0", "javascript_supabase==1.0.0"]
